@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from application_config import app_config
+from app.config.application_config import app_config
 
 def get_mongo_clients():
     return MongoClient(app_config.MONGO_URI)

@@ -1,20 +1,29 @@
-from datetime import datetime, timezone
-import uuid
+# app/services/document_service.py
+from app.models.document_model import RequestBody, ResponseBody, get_current_timestamp
+from pydantic import ValidationError
+from bson import ObjectId
 
-def validate_document(document: dict):
-    """
-    Process and validate the document, returning result dict.
-    """
-    # generate unique doc ID
-    document_id = "doc_" + uuid.uuid4().hex
 
-    # Processed timestamp in UTC
-    processed_at = datetime.now(timezone.utc).isoformat()
+def validate_document(request_data: dict) -> tuple:
+    try:
+        request = RequestBody(**request_data)
+        document_id = str(request._id or ObjectId())
 
-    result = {
-        "status": "valid",
-        "document_id": document_id,
-        "validation_errors": [],
-        "processed_at": processed_at
-    }
-    return result
+        response = ResponseBody(
+            _id=document_id,
+            status="valid",
+            validation_errors=[],
+            processed_at=get_current_timestamp()
+        )
+        return response.dict(), 200
+
+    except ValidationError as e:
+        errors = [error["msg"] for error in e.errors()]
+        document_id = str(ObjectId())  # fallback if _id validation failed
+        response = ResponseBody(
+            _id=document_id,
+            status="invalid",
+            validation_errors=errors,
+            processed_at=get_current_timestamp()
+        )
+        return response.dict(), 422

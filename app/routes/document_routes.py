@@ -1,18 +1,20 @@
+# app/routes/document_routes.py
 from fastapi import APIRouter, HTTPException
-from app.models.document_model import DocumentModel
 from app.services.document_service import validate_document
+from typing import Dict
 
-router = APIRouter(
-    prefix="/api/v1/documents",
-    tags=["documents"]
-)
+router = APIRouter(prefix="/api/v1/documents", tags=["Documents"])
+
 
 @router.post("/validate")
-async def validate_document_api(document: DocumentModel):
-    try:
-        result = validate_document(document)
-        if result["status"] == "invalid":
-            return {"status": "invalid", **result}
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+async def validate_document_route(request_data: Dict):
+    """
+    Route to validate a document.
+    """
+    response, status_code = validate_document(request_data)
+
+    if status_code == 200:
+        return response
+    else:
+        raise HTTPException(status_code=status_code, detail=response)
+
